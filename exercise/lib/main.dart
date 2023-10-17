@@ -1,42 +1,174 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(
-    const MaterialApp(
-      // OS task switcher title
-      title: 'Exercise App',
-      // display within device UI
-      home: SafeArea(
-        child: ExerciseApp(),
-      ),
-      // hide debug banner
-      debugShowCheckedModeBanner: false,
-    ),
-  );
-}
+void main() => runApp(ExerciseApp());
 
 class ExerciseApp extends StatelessWidget {
   const ExerciseApp({super.key});
 
+  // display app within device UI
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      title: 'Exercise App', // OS task switcher title
+      home: SafeArea(
+        child: PageNavigation(),
+      ),
+      debugShowCheckedModeBanner: false, // hide debug banner
+    );
+  }
+}
+
+class PageNavigation extends StatefulWidget {
+  const PageNavigation({super.key});
+
+  @override
+  State<PageNavigation> createState() => _PageNavigationState();
+}
+
+class _PageNavigationState extends State<PageNavigation> {
+  int currentPageIndex = 0;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Center(
-          child: Text("Exercise App"),
-        ),
+      bottomNavigationBar: NavigationBar(
+        onDestinationSelected: (int i) {
+          setState(() {
+            currentPageIndex = i;
+          });
+        },
+        selectedIndex: currentPageIndex,
+        destinations: const <Widget>[
+          NavigationDestination(icon: Icon(Icons.alarm), label: "Routine"),
+          NavigationDestination(icon: Icon(Icons.yard), label: "Exercises"),
+          NavigationDestination(icon: Icon(Icons.person), label: "Profile")
+        ],
       ),
-      body: const Center(
-        child: Text("Hello World"),
+      body: <Widget>[
+        RoutinePage(),
+        ExercisesPage(
+          exercises: generateExercises(),
+        ),
+        ProfilePage(),
+      ][currentPageIndex],
+    );
+  }
+}
+
+// parse list of exercises from (file or database? DECIDE)
+List<Exercise> generateExercises() {
+  return List.generate(
+    5,
+    (i) => Exercise(
+      'Exercise $i',
+      'Exercise $i description',
+      'iconFile.png',
+    ),
+  );
+}
+
+class RoutinePage extends StatelessWidget {
+  const RoutinePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text("Routine Page"),
+    );
+  }
+}
+
+class ExercisesPage extends StatelessWidget {
+  const ExercisesPage({super.key, required this.exercises});
+
+  final List<Exercise> exercises;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      itemCount: exercises.length,
+      itemBuilder: (context, index) {
+        return ListTile(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    ExerciseDetail(exercise: exercises[index]),
+              ),
+            );
+          },
+          leading: FlutterLogo(),
+          title: Text(exercises[index].name),
+        );
+      },
+    );
+  }
+}
+
+class ExerciseDetail extends StatelessWidget {
+  const ExerciseDetail({super.key, required this.exercise});
+
+  final Exercise exercise;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(exercise.name)),
+      body: Center(
+        child: Text(exercise.description),
       ),
     );
   }
 }
 
-/*
-void main() {
-  runApp(const MyApp());
+class ProfilePage extends StatelessWidget {
+  const ProfilePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text("Profile Page"),
+    );
+  }
 }
+
+class Exercise {
+  final String name;
+  final String description;
+  final String iconFile;
+
+  const Exercise(this.name, this.description, this.iconFile);
+}
+
+/*
+children: <Widget>[
+          // change to toggle button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: const <Widget>[
+              Text("List View "),
+              Icon(Icons.arrow_drop_down),
+            ],
+          ),
+          ListTile(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (BuildContext builder) {
+                  return Scaffold(
+                    appBar: AppBar(title: Text("HERE")),
+                    body: Center(
+                      child: Text("Exercises in Category"),
+                    ),
+                  );
+                }),
+              );
+            },
+            leading: FlutterLogo(),
+            title: Text("Exercise Category"),
+          ),
+        ],
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -48,20 +180,6 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: ThemeData(
         // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a blue toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
