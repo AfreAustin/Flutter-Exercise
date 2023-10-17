@@ -2,6 +2,15 @@ import 'package:flutter/material.dart';
 
 void main() => runApp(ExerciseApp());
 
+class Exercise {
+  final String name;
+  final String description;
+  final String category;
+  final String iconFile;
+
+  const Exercise(this.name, this.description, this.category, this.iconFile);
+}
+
 class ExerciseApp extends StatelessWidget {
   const ExerciseApp({super.key});
 
@@ -18,6 +27,7 @@ class ExerciseApp extends StatelessWidget {
   }
 }
 
+// structure of the whole app
 class PageNavigation extends StatefulWidget {
   const PageNavigation({super.key});
 
@@ -25,6 +35,7 @@ class PageNavigation extends StatefulWidget {
   State<PageNavigation> createState() => _PageNavigationState();
 }
 
+// change route shown based on chosen nav option
 class _PageNavigationState extends State<PageNavigation> {
   int currentPageIndex = 0;
 
@@ -56,17 +67,20 @@ class _PageNavigationState extends State<PageNavigation> {
 }
 
 // parse list of exercises from (file or database? DECIDE)
+// then sorts list by category
 List<Exercise> generateExercises() {
   return List.generate(
-    5,
+    20,
     (i) => Exercise(
       'Exercise $i',
       'Exercise $i description',
+      'category',
       'iconFile.png',
     ),
   );
 }
 
+// show the set routine of a user -------------------------------------------------------------
 class RoutinePage extends StatelessWidget {
   const RoutinePage({super.key});
 
@@ -78,6 +92,7 @@ class RoutinePage extends StatelessWidget {
   }
 }
 
+// show the list of exercises available -------------------------------------------------------
 class ExercisesPage extends StatelessWidget {
   const ExercisesPage({super.key, required this.exercises});
 
@@ -85,23 +100,41 @@ class ExercisesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: exercises.length,
-      itemBuilder: (context, index) {
-        return ListTile(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    ExerciseDetail(exercise: exercises[index]),
-              ),
-            );
-          },
-          leading: FlutterLogo(),
-          title: Text(exercises[index].name),
-        );
-      },
+    return Column(
+      children: <Widget>[
+        // TODO: convert to toggle button
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: const <Widget>[
+            Text("List View "),
+            Icon(Icons.arrow_drop_down),
+          ],
+        ),
+        // TODO: change according to which view
+        Expanded(
+          child: SizedBox(
+            height: double.maxFinite,
+            child: ListView.builder(
+              itemCount: exercises.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ExerciseDetail(exercise: exercises[index]),
+                      ),
+                    );
+                  },
+                  leading: FlutterLogo(), // Icon(exercises[index].icon),
+                  title: Text(exercises[index].name),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -116,12 +149,18 @@ class ExerciseDetail extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(exercise.name)),
       body: Center(
-        child: Text(exercise.description),
+        child: Column(
+          children: [
+            FlutterLogo(), // Icon(exercise.iconFile),
+            Text(exercise.description),
+          ],
+        ),
       ),
     );
   }
 }
 
+// show the user their details and settings ---------------------------------------------------
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
@@ -133,42 +172,14 @@ class ProfilePage extends StatelessWidget {
   }
 }
 
-class Exercise {
-  final String name;
-  final String description;
-  final String iconFile;
-
-  const Exercise(this.name, this.description, this.iconFile);
-}
-
 /*
-children: <Widget>[
-          // change to toggle button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: const <Widget>[
-              Text("List View "),
-              Icon(Icons.arrow_drop_down),
-            ],
-          ),
-          ListTile(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (BuildContext builder) {
-                  return Scaffold(
-                    appBar: AppBar(title: Text("HERE")),
-                    body: Center(
-                      child: Text("Exercises in Category"),
-                    ),
-                  );
-                }),
-              );
-            },
-            leading: FlutterLogo(),
-            title: Text("Exercise Category"),
-          ),
-        ],
+Row(
+  mainAxisAlignment: MainAxisAlignment.end,
+  children: const <Widget>[
+    Text("List View "),
+    Icon(Icons.arrow_drop_down),
+  ],
+),
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
