@@ -233,14 +233,25 @@ class ExerciseDetail extends StatelessWidget {
 }
 
 // show the user their details and settings ---------------------------------------------------
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  int alarmTime = 0;
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: const <Widget>[
-        Text("Profile Page"),
+      children: <Widget>[
+        Text("Identifier?"),
+        ListTile(
+          title: Text("Reminder Alarm: $alarmTime"),
+        ),
+        Text("Stats"),
       ],
     );
   }
