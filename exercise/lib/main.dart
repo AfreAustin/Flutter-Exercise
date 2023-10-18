@@ -21,7 +21,7 @@ class ExerciseApp extends StatelessWidget {
     return MaterialApp(
       title: 'Exercise App', // OS task switcher title
       theme: ThemeData(
-        colorScheme: ColorScheme.dark(onPrimary: Colors.purple),
+        colorScheme: ColorScheme.dark(primary: Colors.purple),
         useMaterial3: true,
       ),
       home: SafeArea(
@@ -53,12 +53,15 @@ class _PageNavigationState extends State<PageNavigation> {
             currentPageIndex = i;
           });
         },
+        indicatorColor: Theme.of(context).indicatorColor,
         selectedIndex: currentPageIndex,
-        indicatorColor: Colors.deepPurpleAccent,
         destinations: const <Widget>[
-          NavigationDestination(icon: Icon(Icons.alarm), label: "Routine"),
-          NavigationDestination(icon: Icon(Icons.yard), label: "Exercises"),
-          NavigationDestination(icon: Icon(Icons.person), label: "Profile")
+          NavigationDestination(
+              icon: Icon(Icons.timer_sharp), label: "Routine"),
+          NavigationDestination(
+              icon: Icon(Icons.sports_gymnastics), label: "Exercises"),
+          NavigationDestination(
+              icon: Icon(Icons.scoreboard_rounded), label: "Statistics")
         ],
       ),
       body: <Widget>[
