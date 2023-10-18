@@ -7,7 +7,7 @@ class Exercise {
   final String name;
   final String description;
   final String category;
-  final String iconFile;
+  final IconData iconFile;
 
   const Exercise(this.name, this.description, this.category, this.iconFile);
 }
@@ -21,7 +21,10 @@ class ExerciseApp extends StatelessWidget {
     return MaterialApp(
       title: 'Exercise App', // OS task switcher title
       theme: ThemeData(
-        colorScheme: ColorScheme.dark(primary: Colors.purple),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.purple,
+          brightness: Brightness.dark,
+        ),
         useMaterial3: true,
       ),
       home: SafeArea(
@@ -53,7 +56,6 @@ class _PageNavigationState extends State<PageNavigation> {
             currentPageIndex = i;
           });
         },
-        indicatorColor: Theme.of(context).indicatorColor,
         selectedIndex: currentPageIndex,
         destinations: const <Widget>[
           NavigationDestination(
@@ -75,16 +77,17 @@ class _PageNavigationState extends State<PageNavigation> {
   }
 }
 
-// parse list of exercises from (file or database? DECIDE)
+// TODO: Figure out where to get exercises from
+// parse list of exercises from ...
 // then sorts list by category
 List<Exercise> generateExercises() {
   return List.generate(
-    20,
+    10,
     (i) => Exercise(
       'Exercise $i',
       'Exercise $i description',
-      'category',
-      'iconFile.png',
+      'Exercise $i category',
+      Icons.sports_martial_arts,
     ),
   );
 }
@@ -167,49 +170,106 @@ class _RoutinePageState extends State<RoutinePage> {
   }
 }
 
-// show the list of exercises available -------------------------------------------------------
-class ExercisesPage extends StatelessWidget {
+// show all available exercises  --------------------------------------------------------------
+enum View { list, card, grid }
+
+class ExercisesPage extends StatefulWidget {
   const ExercisesPage({super.key, required this.exercises});
 
   final List<Exercise> exercises;
 
   @override
+  State<ExercisesPage> createState() => _ExercisesPageState();
+}
+
+class _ExercisesPageState extends State<ExercisesPage> {
+  View viewType = View.list;
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        // TODO: convert to toggle button
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: const <Widget>[
-            Text("List View "),
-            Icon(Icons.arrow_drop_down),
+        SizedBox(height: 10.0),
+        SegmentedButton(
+          onSelectionChanged: (Set<View> selectedView) {
+            setState(() {
+              viewType = selectedView.first;
+            });
+          },
+          selected: <View>{viewType},
+          showSelectedIcon: false,
+          segments: const <ButtonSegment<View>>[
+            ButtonSegment(
+              value: View.list,
+              label: Text("List"),
+              icon: Icon(Icons.list),
+            ),
+            ButtonSegment(
+              value: View.card,
+              label: Text("Card"),
+              icon: Icon(Icons.recent_actors),
+            ),
+            /* TO BE IMPLEMENTED
+            ButtonSegment(
+              value: View.grid,
+              label: Text("Grid"),
+            )*/
           ],
         ),
-        // TODO: change according to which view
-        Expanded(
-          child: SizedBox(
-            height: double.maxFinite,
-            child: ListView.builder(
-              itemCount: exercises.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            ExerciseDetail(exercise: exercises[index]),
-                      ),
-                    );
-                  },
-                  leading: FlutterLogo(), // Icon(exercises[index].icon),
-                  title: Text(exercises[index].name),
-                );
-              },
-            ),
-          ),
+        SizedBox(height: 10.0),
+        Flexible(
+          child: switch (viewType) {
+            View.list => ListExercises(exercises: widget.exercises),
+            View.card => Placeholder(),
+            View.grid => Placeholder(), // TODO: design gridview
+            //_ => Placeholder(),
+          },
         ),
       ],
+    );
+  }
+}
+
+// show exercises in list view
+class ListExercises extends StatelessWidget {
+  const ListExercises({super.key, required this.exercises});
+
+  final List<Exercise> exercises;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      itemCount: exercises.length,
+      itemBuilder: (context, index) {
+        return ListTile(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    ExerciseDetail(exercise: exercises[index]),
+              ),
+            );
+          },
+          visualDensity: VisualDensity(vertical: 4.0),
+          leading: Icon(
+            exercises[index].iconFile,
+            size: 50.0,
+          ),
+          title: Text(
+            exercises[index].name,
+            style: const TextStyle(
+              fontSize: 15.0,
+            ),
+          ),
+          trailing: IconButton(
+            onPressed: () =>
+                debugPrint("Added"), // TODO: add exercise to routine function
+            icon: Icon(Icons.add),
+            tooltip: "Add to Routine",
+          ),
+        );
+      },
     );
   }
 }
@@ -226,7 +286,13 @@ class ExerciseDetail extends StatelessWidget {
       body: Center(
         child: Column(
           children: [
-            FlutterLogo(), // Icon(exercise.iconFile),
+            SizedBox(height: 10.0),
+            Icon(
+              exercise.iconFile,
+              size: 200.0,
+            ),
+            SizedBox(height: 10.0),
+            Text(exercise.category),
             Text(exercise.description),
           ],
         ),
