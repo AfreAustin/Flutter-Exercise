@@ -1,5 +1,8 @@
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 void main() => runApp(ExerciseApp());
 
@@ -22,7 +25,7 @@ class ExerciseApp extends StatelessWidget {
       title: 'Exercise App', // OS task switcher title
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.purple,
+          seedColor: Colors.deepPurple,
           brightness: Brightness.dark,
         ),
         useMaterial3: true,
@@ -49,31 +52,50 @@ class _PageNavigationState extends State<PageNavigation> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      bottomNavigationBar: NavigationBar(
-        onDestinationSelected: (int i) {
-          setState(() {
-            currentPageIndex = i;
-          });
-        },
-        selectedIndex: currentPageIndex,
-        destinations: const <Widget>[
-          NavigationDestination(
-              icon: Icon(Icons.timer_sharp), label: "Routine"),
-          NavigationDestination(
-              icon: Icon(Icons.sports_gymnastics), label: "Exercises"),
-          NavigationDestination(
-              icon: Icon(Icons.scoreboard_rounded), label: "Statistics")
-        ],
-      ),
-      body: <Widget>[
-        RoutinePage(),
-        ExercisesPage(
-          exercises: generateExercises(),
+    return ChangeNotifierProvider(
+      create: (context) => RoutineModel(),
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.deepPurple,
+          title: Text("EXERCISE APP"),
+          centerTitle: true,
         ),
-        ProfilePage(),
-      ][currentPageIndex],
+        bottomNavigationBar: NavigationBar(
+          onDestinationSelected: (int i) {
+            setState(() {
+              currentPageIndex = i;
+            });
+          },
+          selectedIndex: currentPageIndex,
+          destinations: const <Widget>[
+            NavigationDestination(
+                icon: Icon(Icons.timer_sharp), label: "Routine"),
+            NavigationDestination(
+                icon: Icon(Icons.sports_gymnastics), label: "Exercises"),
+            NavigationDestination(
+                icon: Icon(Icons.scoreboard_rounded), label: "Statistics")
+          ],
+        ),
+        body: <Widget>[
+          RoutinePage(routine: generateExercises()),
+          ExercisesPage(exercises: generateExercises()),
+          ProfilePage(),
+        ][currentPageIndex],
+      ),
     );
+  }
+}
+
+class RoutineModel extends ChangeNotifier {
+  final List<Exercise> _exercises = [];
+
+  UnmodifiableListView<Exercise> get exercises =>
+      UnmodifiableListView(_exercises);
+
+  void add(Exercise exercise) {
+    _exercises.add(exercise);
+    // add to some external file/DB
+    notifyListeners();
   }
 }
 
@@ -94,15 +116,17 @@ List<Exercise> generateExercises() {
 
 // show the set routine of a user -------------------------------------------------------------
 class RoutinePage extends StatefulWidget {
-  const RoutinePage({super.key});
+  const RoutinePage({super.key, required this.routine});
+
+  final List<Exercise> routine;
 
   @override
   State<RoutinePage> createState() => _RoutinePageState();
 }
 
 class _RoutinePageState extends State<RoutinePage> {
-  var f = NumberFormat('###.#%');
-  int currDay = 3;
+  var f = NumberFormat('#.#%');
+  int currDay = 20;
   int maxDay = 30;
 
   @override
@@ -110,56 +134,79 @@ class _RoutinePageState extends State<RoutinePage> {
     return Column(
       children: <Widget>[
         SizedBox(height: 20.0),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            border: Border.all(width: 1, color: Colors.white),
-            color: Colors.deepOrange,
-          ),
-          child: SizedBox(
-            height: 100.0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Stack(
+        SizedBox(
+          height: 80.0,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              DecoratedBox(
+                decoration: BoxDecoration(
+                    color: Colors.deepPurpleAccent,
+                    borderRadius: BorderRadius.circular(50.0)),
+                child: Stack(
+                  alignment: AlignmentDirectional.center,
                   children: [
                     Text(
                       f.format(currDay / maxDay),
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    CircularProgressIndicator(
-                      strokeCap: StrokeCap.round,
-                      backgroundColor: Colors.black,
-                      value: currDay / maxDay,
+                    SizedBox(
+                      height: 60.0,
+                      width: 60.0,
+                      child: CircularProgressIndicator(
+                        strokeCap: StrokeCap.round,
+                        strokeWidth: 7.0,
+                        color: Colors.lightGreenAccent,
+                        backgroundColor: Colors.black26,
+                        value: currDay / maxDay,
+                      ),
                     ),
                   ],
                 ),
-                Text(
-                  "Progress: ${((maxDay - currDay == 0) ? "Completed!" : "${maxDay - currDay} days left")}",
+              ),
+              Text(
+                (maxDay - currDay == 0)
+                    ? "COMPLETED!"
+                    : " DAY ${maxDay - currDay}",
+                style: TextStyle(
+                  fontSize: 25.0,
+                  fontWeight: FontWeight.bold,
                 ),
-                ElevatedButton(
-                  onPressed: () {
-                    debugPrint("Pressed");
-                  },
-                  child: Icon(Icons.play_arrow),
-                ),
-              ],
-            ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  debugPrint(
+                      "Pressed"); // TODO: Implement Start Exercise function
+                },
+                child: Icon(Icons.play_arrow),
+              ),
+            ],
           ),
         ),
-        SizedBox(height: 20.0),
-        SizedBox(
-          height: MediaQuery.of(context).size.height - 220.0,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.white),
-            ),
-            child: ListView.builder(
-              itemCount: 20,
+        Divider(
+          height: 20.0,
+          indent: 10.0,
+          endIndent: 10.0,
+        ),
+        Flexible(
+          child: Consumer<RoutineModel>(
+            builder: (context, routine, child) => ListView.builder(
+              itemCount: routine.exercises.length,
               itemBuilder: (context, index) {
                 return ListTile(
-                  isThreeLine: true,
-                  leading: FlutterLogo(),
-                  title: Text("Exercise"),
-                  subtitle: Text("  "),
+                  title: Text("#REPS  ${routine.exercises[index].name}"),
+                  trailing: IconButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ExerciseDetail(
+                              exercise: routine.exercises[index]),
+                        ),
+                      );
+                    },
+                    icon: Icon(Icons.visibility),
+                  ),
                 );
               },
             ),
@@ -170,9 +217,10 @@ class _RoutinePageState extends State<RoutinePage> {
   }
 }
 
-// show all available exercises  --------------------------------------------------------------
+// Exercises Route  ---------------------------------------------------------------------------
 enum View { list, card, grid }
 
+// show all availalbe exercises
 class ExercisesPage extends StatefulWidget {
   const ExercisesPage({super.key, required this.exercises});
 
@@ -182,6 +230,7 @@ class ExercisesPage extends StatefulWidget {
   State<ExercisesPage> createState() => _ExercisesPageState();
 }
 
+// Display exercises based on view chosen
 class _ExercisesPageState extends State<ExercisesPage> {
   View viewType = View.list;
 
@@ -189,7 +238,7 @@ class _ExercisesPageState extends State<ExercisesPage> {
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        SizedBox(height: 10.0),
+        SizedBox(height: 20.0),
         SegmentedButton(
           onSelectionChanged: (Set<View> selectedView) {
             setState(() {
@@ -207,22 +256,25 @@ class _ExercisesPageState extends State<ExercisesPage> {
             ButtonSegment(
               value: View.card,
               label: Text("Card"),
-              icon: Icon(Icons.recent_actors),
+              icon: Icon(Icons.view_carousel_outlined),
             ),
-            /* TO BE IMPLEMENTED
             ButtonSegment(
               value: View.grid,
               label: Text("Grid"),
-            )*/
+              icon: Icon(Icons.grid_view),
+            )
           ],
         ),
         SizedBox(height: 10.0),
         Flexible(
           child: switch (viewType) {
             View.list => ListExercises(exercises: widget.exercises),
-            View.card => Placeholder(),
-            View.grid => Placeholder(), // TODO: design gridview
-            //_ => Placeholder(),
+            View.card => Center(
+                child: Text("TO BE IMPLEMENTED"),
+              ), // TODO: implement card view
+            View.grid => Center(
+                child: Text("TO BE DESIGNED"),
+              ), // TODO: design gridview
           },
         ),
       ],
@@ -231,15 +283,21 @@ class _ExercisesPageState extends State<ExercisesPage> {
 }
 
 // show exercises in list view
-class ListExercises extends StatelessWidget {
+class ListExercises extends StatefulWidget {
   const ListExercises({super.key, required this.exercises});
 
   final List<Exercise> exercises;
 
   @override
+  State<ListExercises> createState() => _ListExercisesState();
+}
+
+// format of List View
+class _ListExercisesState extends State<ListExercises> {
+  @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: exercises.length,
+    return ListView.separated(
+      itemCount: widget.exercises.length,
       itemBuilder: (context, index) {
         return ListTile(
           onTap: () {
@@ -247,33 +305,40 @@ class ListExercises extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (context) =>
-                    ExerciseDetail(exercise: exercises[index]),
+                    ExerciseDetail(exercise: widget.exercises[index]),
               ),
             );
           },
           visualDensity: VisualDensity(vertical: 4.0),
           leading: Icon(
-            exercises[index].iconFile,
+            widget.exercises[index].iconFile,
             size: 50.0,
           ),
           title: Text(
-            exercises[index].name,
+            widget.exercises[index].name,
             style: const TextStyle(
               fontSize: 15.0,
             ),
           ),
-          trailing: IconButton(
-            onPressed: () =>
-                debugPrint("Added"), // TODO: add exercise to routine function
+          trailing: IconButton.filledTonal(
+            onPressed: () {
+              Provider.of<RoutineModel>(context, listen: false)
+                  .add(widget.exercises[index]);
+              debugPrint("Added ${widget.exercises[index].name}");
+            }, // TODO: add exercise to routine function
             icon: Icon(Icons.add),
             tooltip: "Add to Routine",
           ),
         );
       },
+      separatorBuilder: (context, index) {
+        return Divider();
+      },
     );
   }
 }
 
+// from List View, display the details of an exercise
 class ExerciseDetail extends StatelessWidget {
   const ExerciseDetail({super.key, required this.exercise});
 
